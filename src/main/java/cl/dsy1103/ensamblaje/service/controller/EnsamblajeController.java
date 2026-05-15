@@ -17,9 +17,13 @@ public class EnsamblajeController {
 
     private final EnsamblajeService ensamblajeService;
 
-    // Obtener todos los tickets
+    // GET Obtener todos los tickets
     @GetMapping
-    public ResponseEntity<List<EnsamblajeResponseDTO>> obtenerTodos() {
+    public ResponseEntity<?> obtenerTodos() {
+        List<EnsamblajeResponseDTO> lista = ensamblajeService.obtenerTodos();
+        if (lista.isEmpty()){
+            return ResponseEntity.ok("No se encontraron ensamblajes");
+        }
         return ResponseEntity.ok(ensamblajeService.obtenerTodos());
     }
 
