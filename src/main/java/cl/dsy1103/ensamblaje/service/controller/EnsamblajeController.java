@@ -27,7 +27,7 @@ public class EnsamblajeController {
         return ResponseEntity.ok(ensamblajeService.obtenerTodos());
     }
 
-    // Obtener por ID
+    // GET Obtener por ID
     @GetMapping("/{id}")
     public ResponseEntity<EnsamblajeResponseDTO> obtenerPorId(@PathVariable Long id) {
         return ensamblajeService.obtenerPorId(id)
@@ -35,13 +35,13 @@ public class EnsamblajeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Crear un ticket (POST)
+    // POST Crear un ticket (POST)
     @PostMapping
     public ResponseEntity<EnsamblajeResponseDTO> crear(@Valid @RequestBody EnsamblajeRequestDTO dto) {
         return ResponseEntity.status(201).body(ensamblajeService.guardar(dto));
     }
 
-    // Iniciar trabajo (PUT) - Cambia estado a EN PROCESO
+    // PUT Iniciar trabajo  - Cambia estado a EN PROCESO
     @PutMapping("/{id}/iniciar")
     public ResponseEntity<EnsamblajeResponseDTO> iniciar(@PathVariable Long id) {
         return ensamblajeService.iniciarTrabajo(id)
