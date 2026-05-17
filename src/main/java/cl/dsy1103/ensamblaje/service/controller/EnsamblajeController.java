@@ -5,47 +5,61 @@ import cl.dsy1103.ensamblaje.service.dto.EnsamblajeResponseDTO;
 import cl.dsy1103.ensamblaje.service.service.EnsamblajeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/ensamblajes")
 @RequiredArgsConstructor
 public class EnsamblajeController {
 
-    private final EnsamblajeService ensamblajeService;
+    private final EnsamblajeService service;
 
-    // GET Obtener todos los tickets
     @GetMapping
     public ResponseEntity<?> obtenerTodos() {
-        List<EnsamblajeResponseDTO> lista = ensamblajeService.obtenerTodos();
-        if (lista.isEmpty()){
-            return ResponseEntity.ok("No se encontraron ensamblajes");
-        }
-        return ResponseEntity.ok(ensamblajeService.obtenerTodos());
+        List<EnsamblajeResponseDTO> lista = service.obtenerTodos();
+        if (lista.isEmpty()) return ResponseEntity.ok(Map.of("mensaje", "No hay tickets de ensamblaje"));
+        return ResponseEntity.ok(lista);
     }
 
-    // GET Obtener por ID
     @GetMapping("/{id}")
-    public ResponseEntity<EnsamblajeResponseDTO> obtenerPorId(@PathVariable Long id) {
-        return ensamblajeService.obtenerPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
+        Optional<EnsamblajeResponseDTO> ticket = service.obtenerPorId(id);
+        if (ticket.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No se encontró ticket con ID: " + id));
+        }
+        return ResponseEntity.ok(ticket.get());
     }
 
-    // POST Crear un ticket (POST)
     @PostMapping
-    public ResponseEntity<EnsamblajeResponseDTO> crear(@Valid @RequestBody EnsamblajeRequestDTO dto) {
-        return ResponseEntity.status(201).body(ensamblajeService.guardar(dto));
+    public ResponseEntity<EnsamblajeResponseDTO> guardar(@Valid @RequestBody EnsamblajeRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(dto));
     }
 
-    // PUT Iniciar trabajo  - Cambia estado a EN PROCESO
+    // PUT especial para cambiar estado a "EN_PROCESO"
     @PutMapping("/{id}/iniciar")
-    public ResponseEntity<EnsamblajeResponseDTO> iniciar(@PathVariable Long id) {
-        return ensamblajeService.iniciarTrabajo(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> iniciarTrabajo(@PathVariable Long id) {
+        Optional<EnsamblajeResponseDTO> actualizado = service.iniciarTrabajo(id);
+        if (actualizado.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No se puede iniciar. No existe ticket con ID: " + id));
+        }
+        return ResponseEntity.ok(actualizado.get());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        if (service.obtenerPorId(id).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No se puede eliminar. No existe ticket con ID: " + id));
+        }
+        service.eliminar(id);
+        return ResponseEntity.ok(Map.of("mensaje", "Ticket con ID " + id + " eliminado con éxito."));
     }
 }
